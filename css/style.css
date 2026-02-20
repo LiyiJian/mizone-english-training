@@ -1131,6 +1131,104 @@ body {
   .tab-btn { font-size: 0.78rem; padding: 0.45rem 0.5rem; }
 }
 
+/* ===== 使用说明页 ===== */
+.page-guide { display: flex; flex-direction: column; gap: 1.25rem; max-width: 780px; }
+.guide-intro {
+  color: var(--gray-600);
+  font-size: 0.95rem;
+  background: var(--blue-light);
+  border-left: 4px solid var(--blue);
+  padding: 0.75rem 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.guide-section {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.guide-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0.75rem 1.25rem;
+}
+.guide-section-body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--gray-700);
+  line-height: 1.7;
+}
+.guide-date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0;
+}
+.guide-date-label { font-weight: 600; color: var(--gray-700); white-space: nowrap; }
+.guide-date-input {
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--gray-800);
+}
+.guide-hint { font-size: 0.8rem; color: var(--gray-400); }
+.guide-modules {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+.guide-module-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+}
+.guide-module-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.guide-module-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.guide-module-duration {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 0.05rem 0.4rem;
+  border-radius: 8px;
+}
+.guide-module-desc { font-size: 0.78rem; color: var(--gray-500); margin-top: 0.2rem; }
+.guide-list {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+}
+.guide-list li { line-height: 1.6; }
+.guide-start-btn-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1rem;
+}
+@media (max-width: 600px) {
+  .guide-modules { grid-template-columns: 1fr; }
+}
+
 /* ===== 课程总览页 ===== */
 .page-overview { display: flex; flex-direction: column; gap: 1.25rem; }
 

@@ -1,8 +1,9 @@
 var App = (function () {
   var currentPage = 'dashboard';
   var pages = {
-    dashboard: { label: '进度看板', icon: '📊', module: 'PageDashboard' },
+    guide:     { label: '使用说明', icon: '📖', module: 'PageGuide' },
     overview:  { label: '课程总览', icon: '📅', module: 'PageOverview' },
+    dashboard: { label: '进度看板', icon: '📊', module: 'PageDashboard' },
     today:     { label: '今日训练', icon: '🗓️', module: 'PageToday' },
     listening: { label: '听力训练', icon: '🎧', module: 'PageListening' },
     writing:   { label: '写作训练', icon: '✍️', module: 'PageWriting' },
@@ -16,7 +17,7 @@ var App = (function () {
     AppStorage.init();
     renderSidebar();
     renderTopbar();
-    navigate('dashboard');
+    navigate('guide');
     window.addEventListener('resize', onResize);
   }
 
@@ -25,38 +26,34 @@ var App = (function () {
     var currentDay = AppStorage.getCurrentDay();
     var progress = data.dailyProgress || {};
 
-    var trainingPages = ['today', 'listening', 'writing', 'speaking', 'quiz'];
-    var otherPages = ['custom', 'settings'];
+    function navItem(id, extraDot) {
+      var p = pages[id];
+      return '<button class="nav-item ' + (currentPage === id ? 'active' : '') + '" onclick="App.navigate(\'' + id + '\')">' +
+        '<span class="nav-icon">' + p.icon + '</span>' +
+        '<span>' + p.label + '</span>' +
+        (extraDot ? '<span class="nav-done-dot"></span>' : '') +
+      '</button>';
+    }
 
+    var dayProgress = progress[currentDay] || {};
     var navHTML = '';
 
-    navHTML += '<div class="nav-section-label">训练模块</div>';
-    trainingPages.forEach(function (id) {
-      var p = pages[id];
-      var dayProgress = progress[currentDay] || {};
+    // 入门区
+    navHTML += '<div class="nav-section-label">入门</div>';
+    navHTML += navItem('guide');
+    navHTML += navItem('overview');
+
+    // 训练区
+    navHTML += '<div class="nav-section-label" style="margin-top:.4rem">训练模块</div>';
+    ['today', 'listening', 'writing', 'speaking', 'quiz'].forEach(function (id) {
       var done = dayProgress[id] && dayProgress[id].completed;
-      navHTML += '<button class="nav-item ' + (currentPage === id ? 'active' : '') + '" onclick="App.navigate(\'' + id + '\')">' +
-        '<span class="nav-icon">' + p.icon + '</span>' +
-        '<span>' + p.label + '</span>' +
-        (done ? '<span class="nav-done-dot"></span>' : '') +
-      '</button>';
+      navHTML += navItem(id, done);
     });
 
-    navHTML += '<div class="nav-section-label" style="margin-top:.5rem">其他</div>';
-    navHTML += '<button class="nav-item ' + (currentPage === 'dashboard' ? 'active' : '') + '" onclick="App.navigate(\'dashboard\')">' +
-      '<span class="nav-icon">' + pages.dashboard.icon + '</span>' +
-      '<span>' + pages.dashboard.label + '</span>' +
-    '</button>';
-    navHTML += '<button class="nav-item ' + (currentPage === 'overview' ? 'active' : '') + '" onclick="App.navigate(\'overview\')">' +
-      '<span class="nav-icon">' + pages.overview.icon + '</span>' +
-      '<span>' + pages.overview.label + '</span>' +
-    '</button>';
-    otherPages.forEach(function (id) {
-      var p = pages[id];
-      navHTML += '<button class="nav-item ' + (currentPage === id ? 'active' : '') + '" onclick="App.navigate(\'' + id + '\')">' +
-        '<span class="nav-icon">' + p.icon + '</span>' +
-        '<span>' + p.label + '</span>' +
-      '</button>';
+    // 其他区
+    navHTML += '<div class="nav-section-label" style="margin-top:.4rem">其他</div>';
+    ['dashboard', 'custom', 'settings'].forEach(function (id) {
+      navHTML += navItem(id);
     });
 
     var sidebar = document.getElementById('sidebar');
