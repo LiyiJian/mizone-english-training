@@ -162,7 +162,9 @@ var PageQuiz = (function () {
         '<div class="review-correct-answer">正确答案：<span>' +
           (q.type === 'mcq' ? q.options[q.answer] : (q.type === 'correction' ? q.corrected : q.answer)) +
         '</span></div>' : '') +
-      '<div class="review-explanation">💡 ' + q.explanation + '</div>' +
+      '<div class="review-explanation">💡 ' + q.explanation +
+        (q.explanationZh ? '<div class="zh-translation">' + q.explanationZh + '</div>' : '') +
+      '</div>' +
     '</div>';
   }
 

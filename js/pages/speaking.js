@@ -63,6 +63,7 @@ var PageSpeaking = (function () {
           return '<div class="outline-item">' +
             '<div class="outline-point">' + item.point + '</div>' +
             '<div class="outline-note">' + item.note + '</div>' +
+            (item.noteZh ? '<div class="zh-translation">' + item.noteZh + '</div>' : '') +
           '</div>';
         }).join('') +
       '</div>' +
@@ -70,10 +71,13 @@ var PageSpeaking = (function () {
       '<div class="key-sentences-card">' +
         '<div class="ks-title">💬 关键句型参考</div>' +
         '<ul class="ks-list">' +
-          S.keySentences.map(function (s) {
+          S.keySentences.map(function (s, i) {
             return '<li class="ks-item">' +
-              '<span class="ks-text">' + s + '</span>' +
-              '<button class="btn-play-ks" onclick="PageSpeaking.playKeySentence(\'' + s.replace(/'/g, "\\'") + '\')" title="试听">▶</button>' +
+              '<div class="ks-en-row">' +
+                '<span class="ks-text">' + s + '</span>' +
+                '<button class="btn-play-ks" onclick="PageSpeaking.playKeySentence(\'' + s.replace(/'/g, "\\'") + '\')" title="试听">▶</button>' +
+              '</div>' +
+              (S.keySentencesZh && S.keySentencesZh[i] ? '<div class="zh-translation">' + S.keySentencesZh[i] + '</div>' : '') +
             '</li>';
           }).join('') +
         '</ul>' +

@@ -52,6 +52,7 @@ var PageWriting = (function () {
           return '<div class="template-item">' +
             '<div class="template-label">' + item.label + '</div>' +
             '<div class="template-text">' + item.text.replace(/\n/g, '<br>') + '</div>' +
+            (item.textZh ? '<div class="zh-translation">' + item.textZh.replace(/\n/g, '<br>') + '</div>' : '') +
           '</div>';
         }).join('') +
       '</div>' +
@@ -75,12 +76,12 @@ var PageWriting = (function () {
       '<div class="template-vocab">' +
         '<div class="tips-title">📝 高频商务邮件句型</div>' +
         '<ul class="phrase-list">' +
-          '<li>"I\'m writing to..." / "I\'d like to..."</li>' +
-          '<li>"Please find attached..." / "As discussed..."</li>' +
-          '<li>"Could you please..." / "Action required:"</li>' +
-          '<li>"Best regards" / "Warm regards" / "Kind regards"</li>' +
-          '<li>"I look forward to..." / "Looking forward to hearing from you"</li>' +
-          '<li>"Please don\'t hesitate to reach out..."</li>' +
+          '<li>"I\'m writing to..." / "I\'d like to..." <span class="zh-translation">我写信是为了…… / 我想要……</span></li>' +
+          '<li>"Please find attached..." / "As discussed..." <span class="zh-translation">请查收附件…… / 如我们讨论的……</span></li>' +
+          '<li>"Could you please..." / "Action required:" <span class="zh-translation">能否请您…… / 需要采取行动：</span></li>' +
+          '<li>"Best regards" / "Warm regards" / "Kind regards" <span class="zh-translation">此致敬礼（三种常用结尾敬语）</span></li>' +
+          '<li>"I look forward to..." / "Looking forward to hearing from you" <span class="zh-translation">我期待…… / 期待您的回复</span></li>' +
+          '<li>"Please don\'t hesitate to reach out..." <span class="zh-translation">请随时联系我……</span></li>' +
         '</ul>' +
       '</div>' +
 
@@ -115,6 +116,11 @@ var PageWriting = (function () {
         '<div class="reference-email">' +
           '<div class="ref-title">📖 参考范文</div>' +
           '<pre class="ref-content">' + W.reference + '</pre>' +
+          (W.referenceZh ?
+            '<div class="ref-content-zh">' +
+              '<span class="ref-zh-label">📖 中文对照翻译</span>' +
+              W.referenceZh +
+            '</div>' : '') +
         '</div>' : '') +
     '</div>';
   }

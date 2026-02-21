@@ -99,7 +99,9 @@ var PageListening = (function () {
 
       (state.showText ?
         '<div class="original-text">' + L.text.map(function(s, i) {
-          return '<p class="sentence" id="sent-' + i + '">' + s + '</p>';
+          return '<p class="sentence" id="sent-' + i + '">' + s +
+            (L.textZh && L.textZh[i] ? '<span class="zh-translation">' + L.textZh[i] + '</span>' : '') +
+          '</p>';
         }).join('') + '</div>' : '') +
 
       '<div class="dictation-input-area">' +
@@ -159,7 +161,11 @@ var PageListening = (function () {
       '<div class="original-text collapsed">' +
         '<div class="collapsed-title">查看原文 ▼</div>' +
         '<div class="original-content">' +
-          L.text.map(function (s) { return '<p>' + s + '</p>'; }).join('') +
+          L.text.map(function (s, i) {
+            return '<p>' + s +
+              (L.textZh && L.textZh[i] ? '<span class="zh-translation">' + L.textZh[i] + '</span>' : '') +
+            '</p>';
+          }).join('') +
         '</div>' +
       '</div>' +
       '<button class="btn btn-primary" onclick="PageListening.saveListeningScore(' + totalScore + ')">✓ 保存得分并完成</button>' +
@@ -177,7 +183,9 @@ var PageListening = (function () {
         '<span class="sentence-counter">' + (idx + 1) + ' / ' + sentences.length + '</span>' +
       '</div>' +
       '<div class="current-sentence-box">' +
-        '<p class="current-sentence" id="currentSentence">' + sentences[idx] + '</p>' +
+        '<p class="current-sentence" id="currentSentence">' + sentences[idx] +
+          (L.textZh && L.textZh[idx] ? '<span class="zh-translation">' + L.textZh[idx] + '</span>' : '') +
+        '</p>' +
       '</div>' +
       '<div class="follow-controls">' +
         '<button class="btn btn-secondary" onclick="PageListening.prevSentence()" ' + (idx === 0 ? 'disabled' : '') + '>← 上一句</button>' +
@@ -188,7 +196,9 @@ var PageListening = (function () {
         '<div class="all-title">全文对照：</div>' +
         sentences.map(function (s, i) {
           return '<p class="follow-sentence' + (i === idx ? ' active' : '') + '" onclick="PageListening.jumpSentence(' + i + ')">' +
-            '<span class="sent-num">' + (i + 1) + '.</span> ' + s + '</p>';
+            '<span class="sent-num">' + (i + 1) + '.</span> ' + s +
+            (L.textZh && L.textZh[i] ? '<span class="zh-translation">' + L.textZh[i] + '</span>' : '') +
+          '</p>';
         }).join('') +
       '</div>' +
     '</div>';
@@ -221,6 +231,7 @@ var PageListening = (function () {
           (result ?
             '<div class="answer-explanation">' +
               (state.comprehensionAnswers[qi] === q.answer ? '✅ 正确！' : '❌ 正确答案：' + q.options[q.answer]) +
+              (q.explanationZh ? '<span class="zh-translation">' + q.explanationZh + '</span>' : '') +
             '</div>' : '') +
         '</div>';
       }).join('') +

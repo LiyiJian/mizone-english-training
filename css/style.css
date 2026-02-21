@@ -972,12 +972,17 @@ body {
 .ks-list { list-style: none; padding: 0; }
 .ks-item {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.2rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--gray-100);
 }
 .ks-item:last-child { border-bottom: none; }
+.ks-en-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 .ks-text { font-size: 0.9rem; color: var(--gray-700); line-height: 1.5; flex: 1; font-style: italic; }
 
 .vocab-reminder {
@@ -1591,6 +1596,71 @@ body {
   white-space: nowrap;
 }
 .overview-shortcut-btn:hover { background: var(--blue); color: #fff; }
+
+/* ===== 中文翻译对照样式 ===== */
+.zh-translation {
+  color: var(--gray-500);
+  font-size: 0.88em;
+  font-style: italic;
+  margin-top: 0.2rem;
+  line-height: 1.5;
+}
+.sentence .zh-translation,
+.follow-sentence .zh-translation,
+.current-sentence-box .zh-translation {
+  display: block;
+  font-style: italic;
+  color: var(--gray-400);
+  font-size: 0.85em;
+  margin-top: 0.15rem;
+}
+.ks-item .zh-translation {
+  display: block;
+  font-size: 0.82em;
+  color: var(--gray-400);
+  margin-top: 0.1rem;
+  font-style: italic;
+}
+.template-item .zh-translation {
+  margin-top: 0.25rem;
+  padding-top: 0.2rem;
+  border-top: 1px dashed var(--gray-200);
+}
+.ref-content-zh {
+  background: var(--gray-50);
+  border-left: 3px solid var(--blue);
+  padding: 1rem;
+  margin-top: 0.75rem;
+  border-radius: 6px;
+  color: var(--gray-600);
+  font-size: 0.9em;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.ref-content-zh .ref-zh-label {
+  font-weight: 600;
+  color: var(--blue);
+  font-style: normal;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.review-explanation .zh-translation {
+  margin-top: 0.3rem;
+  padding-top: 0.25rem;
+  border-top: 1px dashed var(--gray-200);
+}
+.answer-explanation .zh-translation {
+  display: block;
+  margin-top: 0.2rem;
+}
+.outline-item .zh-translation {
+  margin-top: 0.15rem;
+}
+.phrase-list .zh-translation {
+  font-size: 0.85em;
+  color: var(--gray-400);
+  margin-left: 0.5rem;
+}
 
 /* 响应式 */
 @media (max-width: 700px) {
