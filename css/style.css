@@ -604,6 +604,127 @@ body {
 }
 .tts-btn-group { display: flex; gap: 0.5rem; }
 
+/* ===== 新播放器组件 ===== */
+.tts-player {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* 语速胶囊组 */
+.rate-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.rate-pills::before {
+  content: '语速';
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-right: 0.2rem;
+  white-space: nowrap;
+}
+.rate-pill {
+  padding: 0.22rem 0.65rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--gray-200);
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  line-height: 1.4;
+}
+.rate-pill:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-light);
+}
+.rate-pill.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* 进度条行 */
+.player-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.progress-track {
+  flex: 1;
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 99px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.progress-track:hover { height: 8px; transition: height 0.15s; }
+.progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 99px;
+  transition: width 0.3s linear;
+  pointer-events: none;
+}
+.progress-label {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+  min-width: 3rem;
+  text-align: center;
+}
+.player-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gray-300);
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.player-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-light);
+}
+.player-btn.primary {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+.player-btn.primary:hover {
+  background: var(--blue-dark);
+  border-color: var(--blue-dark);
+  color: #fff;
+}
+
+/* 显示原文按钮行 */
+.show-text-row {
+  margin-bottom: 0.75rem;
+}
+.btn-sm {
+  padding: 0.28rem 0.8rem;
+  font-size: 0.82rem;
+}
+
 .original-text {
   background: #fff;
   border-radius: var(--radius);

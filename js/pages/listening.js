@@ -1,4 +1,6 @@
 var PageListening = (function () {
+  var RATES = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+
   var state = {
     phase: 'dictation',
     dayContent: null,
@@ -10,7 +12,13 @@ var PageListening = (function () {
     comprehensionAnswers: [],
     comprehensionResult: null,
     sentenceIndex: 0,
-    speakCtrl: null
+    speakCtrl: null,
+    // 播放器状态
+    playerStatus: 'stopped',   // 'stopped' | 'playing' | 'paused'
+    playerRate: 1.0,
+    playerSentenceIdx: 0,
+    playerTotalSentences: 0,
+    playerCtrl: null
   };
 
   function render() {
@@ -48,6 +56,32 @@ var PageListening = (function () {
     return '';
   }
 
+  function renderPlayerBar(L) {
+    var total = L.text.length;
+    var cur = state.playerSentenceIdx;
+    var pct = total > 0 ? Math.round(cur / total * 100) : 0;
+    var status = state.playerStatus;
+
+    return '<div class="tts-player">' +
+      '<div class="rate-pills">' +
+        RATES.map(function (r) {
+          var active = state.playerRate === r ? ' active' : '';
+          return '<button class="rate-pill' + active + '" onclick="PageListening.setRate(' + r + ')">' + r + 'x</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="player-bar">' +
+        '<div class="progress-track" onclick="PageListening.seekProgress(event, this)">' +
+          '<div class="progress-fill" style="width:' + pct + '%"></div>' +
+        '</div>' +
+        '<span class="progress-label">' + cur + ' / ' + total + '</span>' +
+        (status === 'playing'
+          ? '<button class="player-btn" onclick="PageListening.pauseTTS()" title="暂停">⏸</button>'
+          : '<button class="player-btn primary" onclick="PageListening.playAll()" title="播放">▶</button>') +
+        '<button class="player-btn" onclick="PageListening.stopTTS()" title="停止">■</button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function renderDictation(L) {
     var result = state.dictationResult;
     return '<div class="dictation-section">' +
@@ -55,22 +89,12 @@ var PageListening = (function () {
         '<strong>听写练习</strong>：先播放音频，在文本框中写出你听到的内容，然后点击"评分"查看结果。' +
       '</div>' +
 
-      '<div class="tts-controls">' +
-        '<div class="speed-control">' +
-          '<label>语速：</label>' +
-          '<select id="ttsRate" onchange="PageListening.setRate(this.value)">' +
-            '<option value="0.75">慢速 0.75x</option>' +
-            '<option value="1.0" selected>正常 1.0x</option>' +
-            '<option value="1.25">快速 1.25x</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="tts-btn-group">' +
-          '<button class="btn btn-primary" onclick="PageListening.playAll()">▶ 播放全文</button>' +
-          '<button class="btn btn-secondary" onclick="PageListening.stopTTS()">■ 停止</button>' +
-          '<button class="btn btn-secondary" onclick="PageListening.toggleText()">' +
-            (state.showText ? '隐藏原文' : '显示原文') +
-          '</button>' +
-        '</div>' +
+      renderPlayerBar(L) +
+
+      '<div class="show-text-row">' +
+        '<button class="btn btn-secondary btn-sm" onclick="PageListening.toggleText()">' +
+          (state.showText ? '隐藏原文' : '显示原文') +
+        '</button>' +
       '</div>' +
 
       (state.showText ?
@@ -177,10 +201,7 @@ var PageListening = (function () {
       '<div class="instruction-box">' +
         '<strong>听力理解</strong>：先播放音频，再回答以下问题。' +
       '</div>' +
-      '<div class="tts-controls">' +
-        '<button class="btn btn-primary" onclick="PageListening.playAll()">▶ 播放全文</button>' +
-        '<button class="btn btn-secondary" onclick="PageListening.stopTTS()">■ 停止</button>' +
-      '</div>' +
+      renderPlayerBar(L) +
       '<div class="questions-list">' +
       qs.map(function (q, qi) {
         return '<div class="question-block">' +
@@ -211,6 +232,12 @@ var PageListening = (function () {
   }
 
   function switchPhase(phase) {
+    // 切换 tab 时停止当前播放
+    AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+    state.playerSentenceIdx = 0;
+
     state.phase = phase;
     var el = document.getElementById('listening-phase-content');
     if (el) el.innerHTML = renderPhase(state.dayContent.listening);
@@ -219,37 +246,125 @@ var PageListening = (function () {
     });
   }
 
+  function updateProgressUI() {
+    var L = state.dayContent ? state.dayContent.listening : null;
+    if (!L) return;
+    var total = L.text.length;
+    var cur = state.playerSentenceIdx;
+    var pct = total > 0 ? Math.round(cur / total * 100) : 0;
+
+    var fill = document.querySelector('.progress-fill');
+    if (fill) fill.style.width = pct + '%';
+    var label = document.querySelector('.progress-label');
+    if (label) label.textContent = cur + ' / ' + total;
+
+    var oldPlay = document.querySelector('.player-btn.primary');
+    var oldPause = document.querySelector('.player-btn[title="暂停"]');
+    if (state.playerStatus === 'playing') {
+      if (oldPlay) {
+        oldPlay.textContent = '⏸';
+        oldPlay.title = '暂停';
+        oldPlay.onclick = function () { PageListening.pauseTTS(); };
+        oldPlay.classList.remove('primary');
+      }
+    } else {
+      if (oldPause) {
+        oldPause.textContent = '▶';
+        oldPause.title = '播放';
+        oldPause.onclick = function () { PageListening.playAll(); };
+        oldPause.classList.add('primary');
+      }
+      if (oldPlay) {
+        oldPlay.textContent = '▶';
+        oldPlay.title = '播放';
+        oldPlay.onclick = function () { PageListening.playAll(); };
+      }
+    }
+
+    document.querySelectorAll('.sentence').forEach(function (el) { el.classList.remove('speaking'); });
+    if (state.playerStatus === 'playing') {
+      var sentEl = document.getElementById('sent-' + (cur - 1));
+      if (sentEl) sentEl.classList.add('speaking');
+    }
+  }
+
   function playAll() {
-    AppTTS.stop();
     var L = state.dayContent.listening;
     var sentences = L.text;
-    var rate = parseFloat(document.getElementById('ttsRate') ? document.getElementById('ttsRate').value : 1.0);
-    AppTTS.setRate(rate);
-    var idx = 0;
-    function playNext() {
-      if (idx >= sentences.length) return;
-      var i = idx;
-      document.querySelectorAll('.sentence').forEach(function (el) { el.classList.remove('speaking'); });
-      var el = document.getElementById('sent-' + i);
-      if (el) el.classList.add('speaking');
-      AppTTS.speak(sentences[i], { rate: rate, onEnd: function () {
-        idx++;
-        setTimeout(playNext, 600);
-      }});
+
+    if (state.playerStatus === 'paused') {
+      AppTTS.resume();
+      state.playerStatus = 'playing';
+      updateProgressUI();
+      return;
     }
-    playNext();
+
+    AppTTS.stop();
+    if (state.playerStatus === 'stopped') state.playerSentenceIdx = 0;
+    state.playerStatus = 'playing';
+    state.playerTotalSentences = sentences.length;
+    var startIdx = state.playerSentenceIdx;
+
+    state.playerCtrl = AppTTS.speakSentences(sentences.slice(startIdx), {
+      rate: state.playerRate,
+      pause: 600,
+      onSentenceStart: function (relIdx) {
+        state.playerSentenceIdx = startIdx + relIdx + 1;
+        updateProgressUI();
+      },
+      onAllEnd: function () {
+        state.playerStatus = 'stopped';
+        state.playerSentenceIdx = 0;
+        updateProgressUI();
+      }
+    });
+  }
+
+  function pauseTTS() {
+    if (state.playerStatus !== 'playing') return;
+    AppTTS.pause();
+    state.playerStatus = 'paused';
+    updateProgressUI();
   }
 
   function playSentence() {
     var L = state.dayContent.listening;
-    var rate = 1.0;
     AppTTS.stop();
-    AppTTS.speak(L.text[state.sentenceIndex], { rate: rate });
+    AppTTS.speak(L.text[state.sentenceIndex], { rate: state.playerRate || 1.0 });
   }
 
-  function stopTTS() { AppTTS.stop(); }
+  function stopTTS() {
+    AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+    state.playerSentenceIdx = 0;
+    updateProgressUI();
+  }
 
-  function setRate(val) { AppTTS.setRate(parseFloat(val)); }
+  function setRate(val) {
+    state.playerRate = parseFloat(val);
+    AppTTS.setRate(state.playerRate);
+    var wasPlaying = state.playerStatus === 'playing';
+    if (wasPlaying) {
+      stopTTS();
+      playAll();
+    }
+    document.querySelectorAll('.rate-pill').forEach(function (btn) {
+      btn.classList.toggle('active', parseFloat(btn.textContent) === state.playerRate);
+    });
+  }
+
+  function seekProgress(e, trackEl) {
+    var L = state.dayContent.listening;
+    var rect = trackEl.getBoundingClientRect();
+    var ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    var targetIdx = Math.round(ratio * L.text.length);
+    var wasPlaying = state.playerStatus === 'playing' || state.playerStatus === 'paused';
+    stopTTS();
+    state.playerSentenceIdx = targetIdx;
+    if (wasPlaying) playAll();
+    else updateProgressUI();
+  }
 
   function toggleText() {
     state.showText = !state.showText;
@@ -336,6 +451,9 @@ var PageListening = (function () {
 
   function onLeave() {
     AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+    state.playerSentenceIdx = 0;
     state.dictationResult = null;
     state.comprehensionResult = null;
     state.comprehensionAnswers = [];
@@ -347,9 +465,11 @@ var PageListening = (function () {
     render: render,
     switchPhase: switchPhase,
     playAll: playAll,
-    playSentence: playSentence,
+    pauseTTS: pauseTTS,
     stopTTS: stopTTS,
     setRate: setRate,
+    seekProgress: seekProgress,
+    playSentence: playSentence,
     toggleText: toggleText,
     prevSentence: prevSentence,
     nextSentence: nextSentence,
