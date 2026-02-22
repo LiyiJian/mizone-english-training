@@ -667,7 +667,8 @@ body {
   border-radius: 99px;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  user-select: none;
 }
 .progress-track:hover { height: 8px; transition: height 0.15s; }
 .progress-fill {
@@ -676,6 +677,23 @@ body {
   border-radius: 99px;
   transition: width 0.3s linear;
   pointer-events: none;
+}
+.progress-tick {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: calc(100% + 6px);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 1px;
+  transform: translateX(-50%);
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s, height 0.15s, top 0.15s;
+}
+.progress-tick:hover {
+  background: #fff;
+  top: -5px;
+  height: calc(100% + 10px);
 }
 .progress-label {
   font-size: 0.78rem;
@@ -739,8 +757,12 @@ body {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   transition: background 0.2s;
+  cursor: pointer;
 }
-.original-text .sentence.speaking { background: #fef9c3; color: var(--gray-900); font-weight: 500; }
+.original-text .sentence:hover { background: var(--gray-100); }
+.original-text .sentence.selected { background: var(--blue-light); border-left: 3px solid var(--blue); padding-left: 0.35rem; color: var(--blue-dark); }
+.original-text .sentence.speaking { background: #fef9c3; color: var(--gray-900); font-weight: 500; border-left: 3px solid #f59e0b; padding-left: 0.35rem; }
+.original-text .sentence.speaking.selected { background: #fef9c3; color: var(--gray-900); }
 
 .dictation-input-area {
   background: #fff;

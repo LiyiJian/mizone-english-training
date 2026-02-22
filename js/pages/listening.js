@@ -18,8 +18,12 @@ var PageListening = (function () {
     playerRate: 1.0,
     playerSentenceIdx: 0,
     playerTotalSentences: 0,
-    playerCtrl: null
+    playerCtrl: null,
+    selectedSentenceIdx: -1
   };
+
+  // 拖动进度条时的临时状态
+  var _seekDragInfo = null;
 
   function render() {
     var currentDay = AppStorage.getCurrentDay();
@@ -62,6 +66,15 @@ var PageListening = (function () {
     var pct = total > 0 ? Math.round(cur / total * 100) : 0;
     var status = state.playerStatus;
 
+    var ticks = '';
+    for (var ti = 1; ti < total; ti++) {
+      var tickPct = Math.round(ti / total * 100);
+      ticks += '<div class="progress-tick" style="left:' + tickPct + '%"' +
+        ' title="第' + (ti + 1) + '句"' +
+        ' onmousedown="event.stopPropagation()"' +
+        ' onclick="event.stopPropagation();PageListening.seekToSentenceIdx(' + ti + ')"></div>';
+    }
+
     return '<div class="tts-player">' +
       '<div class="rate-pills">' +
         RATES.map(function (r) {
@@ -70,8 +83,9 @@ var PageListening = (function () {
         }).join('') +
       '</div>' +
       '<div class="player-bar">' +
-        '<div class="progress-track" onclick="PageListening.seekProgress(event, this)">' +
+        '<div class="progress-track" onmousedown="PageListening.startSeekDrag(event, this)">' +
           '<div class="progress-fill" style="width:' + pct + '%"></div>' +
+          ticks +
         '</div>' +
         '<span class="progress-label">' + cur + ' / ' + total + '</span>' +
         (status === 'playing'
@@ -99,7 +113,9 @@ var PageListening = (function () {
 
       (state.showText ?
         '<div class="original-text">' + L.text.map(function(s, i) {
-          return '<p class="sentence" id="sent-' + i + '">' + s +
+          var selCls = state.selectedSentenceIdx === i ? ' selected' : '';
+          return '<p class="sentence' + selCls + '" id="sent-' + i + '"' +
+            ' onclick="PageListening.seekToSentence(' + i + ')" title="点击跳转到此句">' + s +
             (L.textZh && L.textZh[i] ? '<span class="zh-translation">' + L.textZh[i] + '</span>' : '') +
           '</p>';
         }).join('') + '</div>' : '') +
@@ -311,24 +327,29 @@ var PageListening = (function () {
     }
 
     AppTTS.stop();
-    if (state.playerStatus === 'stopped') state.playerSentenceIdx = 0;
     state.playerStatus = 'playing';
     state.playerTotalSentences = sentences.length;
     var startIdx = state.playerSentenceIdx;
+    var playRate = state.playerRate;
 
-    state.playerCtrl = AppTTS.speakSentences(sentences.slice(startIdx), {
-      rate: state.playerRate,
-      pause: 600,
-      onSentenceStart: function (relIdx) {
-        state.playerSentenceIdx = startIdx + relIdx + 1;
-        updateProgressUI();
-      },
-      onAllEnd: function () {
-        state.playerStatus = 'stopped';
-        state.playerSentenceIdx = 0;
-        updateProgressUI();
-      }
-    });
+    // 部分浏览器（Chrome/macOS）在 synth.cancel() 后立即调用 synth.speak()
+    // 会静默丢弃新语音，需延迟一帧确保取消操作真正完成
+    setTimeout(function () {
+      if (state.playerStatus !== 'playing') return;
+      state.playerCtrl = AppTTS.speakSentences(sentences.slice(startIdx), {
+        rate: playRate,
+        pause: 600,
+        onSentenceStart: function (relIdx) {
+          state.playerSentenceIdx = startIdx + relIdx + 1;
+          updateProgressUI();
+        },
+        onAllEnd: function () {
+          state.playerStatus = 'stopped';
+          state.playerSentenceIdx = 0;
+          updateProgressUI();
+        }
+      });
+    }, 50);
   }
 
   function pauseTTS() {
@@ -357,7 +378,11 @@ var PageListening = (function () {
     AppTTS.setRate(state.playerRate);
     var wasPlaying = state.playerStatus === 'playing';
     if (wasPlaying) {
+      // playerSentenceIdx 是"已开始的句数"（当前句 index + 1），
+      // 减 1 可回到当前句的起点重新播放
+      var savedIdx = Math.max(0, state.playerSentenceIdx - 1);
       stopTTS();
+      state.playerSentenceIdx = savedIdx;
       playAll();
     }
     document.querySelectorAll('.rate-pill').forEach(function (btn) {
@@ -375,6 +400,88 @@ var PageListening = (function () {
     state.playerSentenceIdx = targetIdx;
     if (wasPlaying) playAll();
     else updateProgressUI();
+  }
+
+  function _calcSeekIdx(clientX, trackEl) {
+    var L = state.dayContent.listening;
+    var rect = trackEl.getBoundingClientRect();
+    var ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return { idx: Math.round(ratio * L.text.length), pct: Math.round(ratio * 100) };
+  }
+
+  function _updateSeekVisual(idx, pct, total) {
+    var fill = document.querySelector('.progress-fill');
+    if (fill) fill.style.width = pct + '%';
+    var label = document.querySelector('.progress-label');
+    if (label) label.textContent = idx + ' / ' + total;
+  }
+
+  function startSeekDrag(e, trackEl) {
+    if (e.button !== 0) return;
+    var L = state.dayContent.listening;
+    var wasPlaying = state.playerStatus === 'playing' || state.playerStatus === 'paused';
+
+    // 立即停止 TTS，防止播放回调覆盖拖动进度条视觉
+    AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+
+    var result = _calcSeekIdx(e.clientX, trackEl);
+    state.playerSentenceIdx = result.idx;
+    _updateSeekVisual(result.idx, result.pct, L.text.length);
+    _seekDragInfo = { trackEl: trackEl, wasPlaying: wasPlaying };
+
+    function onMove(ev) {
+      if (!_seekDragInfo) return;
+      var r = _calcSeekIdx(ev.clientX, _seekDragInfo.trackEl);
+      state.playerSentenceIdx = r.idx;
+      _updateSeekVisual(r.idx, r.pct, L.text.length);
+    }
+
+    function onUp(ev) {
+      if (!_seekDragInfo) return;
+      var r = _calcSeekIdx(ev.clientX, _seekDragInfo.trackEl);
+      var shouldPlay = _seekDragInfo.wasPlaying;
+      _seekDragInfo = null;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      state.playerSentenceIdx = r.idx;
+      if (shouldPlay) playAll();
+      else updateProgressUI();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  }
+
+  // 从进度条 tick 点击跳转（按句子序号）
+  function seekToSentenceIdx(i) {
+    var wasPlaying = state.playerStatus === 'playing' || state.playerStatus === 'paused';
+    AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+    state.playerSentenceIdx = i;
+    if (wasPlaying) playAll();
+    else updateProgressUI();
+  }
+
+  // 从原文点击某句跳转播放位置
+  function seekToSentence(i) {
+    state.selectedSentenceIdx = i;
+    var wasPlaying = state.playerStatus === 'playing' || state.playerStatus === 'paused';
+    AppTTS.stop();
+    if (state.playerCtrl) { state.playerCtrl.stop(); state.playerCtrl = null; }
+    state.playerStatus = 'stopped';
+    state.playerSentenceIdx = i;
+    if (wasPlaying) playAll();
+    else updateProgressUI();
+    document.querySelectorAll('.sentence').forEach(function (el) { el.classList.remove('selected'); });
+    var sentEl = document.getElementById('sent-' + i);
+    if (sentEl) {
+      sentEl.classList.add('selected');
+      sentEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   function toggleText() {
@@ -470,6 +577,8 @@ var PageListening = (function () {
     state.comprehensionAnswers = [];
     state.showText = false;
     state.sentenceIndex = 0;
+    state.selectedSentenceIdx = -1;
+    _seekDragInfo = null;
   }
 
   return {
@@ -479,7 +588,9 @@ var PageListening = (function () {
     pauseTTS: pauseTTS,
     stopTTS: stopTTS,
     setRate: setRate,
-    seekProgress: seekProgress,
+    startSeekDrag: startSeekDrag,
+    seekToSentenceIdx: seekToSentenceIdx,
+    seekToSentence: seekToSentence,
     playSentence: playSentence,
     toggleText: toggleText,
     prevSentence: prevSentence,
