@@ -1684,9 +1684,79 @@ body {
   margin-left: 0.5rem;
 }
 
+/* ===== 翻译相关样式 ===== */
+.btn-translate {
+  background: var(--green, #22c55e);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-translate:hover:not(:disabled) { background: var(--green-dark, #16a34a); }
+.btn-translate:disabled { opacity: 0.7; cursor: not-allowed; }
+.btn-translate.loading { pointer-events: none; }
+
+.translating-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.translate-preview-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.translate-preview {
+  background: #fff;
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem 2rem;
+  max-width: 640px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.preview-hint {
+  color: var(--gray-500);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.preview-field { margin-bottom: 1rem; }
+.preview-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin-bottom: 0.35rem;
+}
+
+/* ===== 口语练习返回栏 ===== */
+.speaking-back-bar {
+  margin-bottom: 1rem;
+}
+
 /* 响应式 */
 @media (max-width: 700px) {
   .overview-cards.grid-mode { grid-template-columns: 1fr; }
   .list-mode .ov-modules { grid-template-columns: 1fr; }
   .overview-stat-row { gap: 1rem; }
+  .translate-preview { padding: 1rem; max-width: 100%; }
 }
